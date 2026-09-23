@@ -1,0 +1,55 @@
+from typing import Union
+
+from qibo.config import raise_error
+
+from qibotn.backends.abstract import QibotnBackend
+from qibotn.backends.cutensornet import CuTensorNet  # pylint: disable=E0401
+
+PLATFORMS = ("cutensornet", "quimb", "qmatchatea")
+
+
+class MetaBackend:
+    """Meta-backend class which takes care of loading the qibotn backends."""
+
+    @staticmethod
+    def load(platform: str, runcard: dict = None, **kwargs) -> QibotnBackend:
+        """Loads the backend.
+
+        Args:
+            platform (str): Name of the backend to load: either `cutensornet` or `qutensornet`.
+            runcard (dict): Dictionary containing the simulation settings.
+        Returns:
+            qibo.backends.abstract.Backend: The loaded backend.
+        """
+
+        if platform == "cutensornet":  # pragma: no cover
+            return CuTensorNet(runcard)
+        elif platform == "quimb":  # pragma: no cover
+            import qibotn.backends.quimb as qmb
+
+            quimb_backend = kwargs.get("quimb_backend", "numpy")
+            contraction_optimizer = kwargs.get("contraction_optimizer", "auto-hq")
+            return qmb.BACKENDS[quimb_backend](
+                quimb_backend=quimb_backend, contraction_optimizer=contraction_optimizer
+            )
+        elif platform == "qmatchatea":  # pragma: no cover
+            from qibotn.backends.qmatchatea import QMatchaTeaBackend
+
+            return QMatchaTeaBackend()
+        else:
+            raise_error(
+                NotImplementedError,
+                f"Unsupported platform {platform}, please pick one in {PLATFORMS}",
+            )
+
+    def list_available(self) -> dict:
+        """Lists all the available qibotn backends."""
+        available_backends = {}
+        for platform in PLATFORMS:
+            try:
+                MetaBackend.load(platform=platform)
+                available = True
+            except:
+                available = False
+            available_backends[platform] = available
+        return available_backends

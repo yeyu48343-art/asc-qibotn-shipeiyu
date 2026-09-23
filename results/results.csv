@@ -1,0 +1,13 @@
+tag,workload,qubits,ngates,command,runtime,status
+baseline_qft,QFT,20,220,python benchmark.py --workloads QFT --qubits 20 --tag baseline_qft [OMP=4],0.3717,success
+baseline_qft,QFT,24,312,python benchmark.py --workloads QFT --qubits 24 --tag baseline_qft [OMP=4],0.5877,success
+baseline_qft,QFT,28,420,python benchmark.py --workloads QFT --qubits 28 --tag baseline_qft [OMP=4],97.7091,success
+baseline_sup,Supremacy,20,236,python benchmark.py --workloads Supremacy --qubits 20 --tag baseline_sup [OMP=4],0.6151,success
+baseline_sup,Supremacy,24,284,python benchmark.py --workloads Supremacy --qubits 24 --tag baseline_sup [OMP=4],0.7659,success
+baseline_sup,Supremacy,28,332,python benchmark.py --workloads Supremacy --qubits 28 --tag baseline_sup [OMP=4],80.0437,success
+opt1_thr8,QFT,28,420,python benchmark.py --workloads QFT --qubits 28 --tag opt1_thr8 [OMP=8],83.9374,success
+opt1_thr12,QFT,28,420,python benchmark.py --workloads QFT --qubits 28 --tag opt1_thr12 [OMP=12],79.8855,success
+opt2_blas_all4,QFT,28,420,OMP+MKL+OPENBLAS+NUMEXPR=4,91.4530,success
+opt3_mps256,QFT,28,420,MPS max_bond=256,72.4353,success
+opt3_mps128,QFT,28,420,MPS max_bond=128,46.4083,success
+opt3_mps64,QFT,28,420,MPS max_bond=64,35.4783,success
