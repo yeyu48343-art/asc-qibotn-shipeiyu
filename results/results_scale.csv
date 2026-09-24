@@ -1,0 +1,21 @@
+tag,workload,qubits,depth,mode,bond,threads,ngates,runtime,status,detail
+A_dense_d8,Supremacy,28,8,dense,0,4,332,58.2022,success,state_dim=268435456
+A_dense_d30,Supremacy,28,30,dense,0,4,1245,182.4957,success,state_dim=268435456
+A_dense_d50,Supremacy,28,50,dense,0,4,2075,,OOM,3-attempts-540s-420s-420s-WSL-VM-crashed-each-time-memory-wall-7.6GB-contraction-never-completed
+A_dense_d100,Supremacy,28,100,dense,0,4,4150,,SKIPPED,beyond-d50-memory-wall-see-MPS-d100-rows
+A2_qft30_dense,QFT,30,0,dense,0,4,480,33.4789,success,state_dim=1073741824
+B_mps_d8_b128,Supremacy,28,8,mps,128,4,332,9.1375,success,state_dim=268435456
+B_mps_d8_b256,Supremacy,28,8,mps,256,4,332,3.9741,success,state_dim=268435456
+B_mps_d30_b128,Supremacy,28,30,mps,128,4,1245,8.851,success,state_dim=268435456
+B_mps_d30_b256,Supremacy,28,30,mps,256,4,1245,8.7589,success,state_dim=268435456
+B_mps_d50_b128,Supremacy,28,50,mps,128,4,2075,8.7103,success,state_dim=268435456
+B_mps_d50_b256,Supremacy,28,50,mps,256,4,2075,9.7798,success,state_dim=268435456
+B_mps_d100_b128,Supremacy,28,100,mps,128,4,4150,20.1231,success,state_dim=268435456
+B_mps_d100_b256,Supremacy,28,100,mps,256,4,4150,49.3038,success,state_dim=268435456
+C_qft30_mps256,QFT,30,0,mps,256,4,480,26.4789,success,state_dim=1073741824
+D_dense_t12,Supremacy,28,8,dense,0,12,332,5.2489,success,state_dim=268435456
+D_dense_t20,Supremacy,28,8,dense,0,20,332,4.3739,success,state_dim=268435456
+D_dense_t4_srv,Supremacy,28,8,dense,0,4,332,4.5173,success,state_dim=268435456
+A_dense_d50_srv,Supremacy,28,50,dense,0,4,2075,46.4391,success,state_dim=268435456
+A_dense_d100_srv,Supremacy,28,100,dense,0,4,,1487.6,FAIL:crash,"[Qibo 0.2.23|INFO|2026-09-24 09:32:50]: Using qibotn (QuimbBackend) backend on /CPU:0
+"

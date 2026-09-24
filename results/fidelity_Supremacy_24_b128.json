@@ -1,0 +1,10 @@
+{
+  "workload": "Supremacy",
+  "qubits": 24,
+  "depth": 8,
+  "bond": 128,
+  "exact_runtime": 0.802,
+  "mps_runtime": 0.344,
+  "fidelity": 0.9999999999999996,
+  "max_abs_err": 6.83116065767989e-16
+}
