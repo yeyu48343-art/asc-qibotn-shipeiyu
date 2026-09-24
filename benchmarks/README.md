@@ -15,33 +15,95 @@
 
 ```
 /                       ← 官方 qibotn 源码（未改动）
-├── src/                ← 官方源码
-├── examples/           ← 官方示例
-├── tests/              ← 官方测试
+├── src/  examples/  tests/  doc/
 ├── benchmarks/         ← ★ 新增：本作业的实验脚本
-│   ├── README.md       ← 本文件
-│   ├── benchmark.py    ← 主 benchmark（QFT/Supremacy 构造 + 计时 + results.csv）
-│   └── benchmark_mps.py← MPS 近似实验（qibotn 原生 mps_opts 路径）
+│   ├── README.md               ← 本文件
+│   ├── benchmark.py            ← 主 benchmark（QFT/Supremacy 构造 + 计时 + CSV）
+│   ├── benchmark_mps.py        ← MPS 近似实验（qibotn 原生 mps_opts 路径）
+│   ├── benchmark_scale.py      ← 单次实验执行器（子进程调用，JSON 输出）
+│   ├── run_scale_suite.py      ← 规模升级套件驱动（断点续跑 + --single 模式）
+│   ├── benchmark_fidelity.py   ← fidelity 量化（QFT 24q）
+│   ├── benchmark_fidelity2.py  ← fidelity 通用版（任意 workload/qubits/depth/bond）
+│   └── server_suite.sh / server_batch2.py  ← 服务器端批量驱动
 └── results/            ← ★ 新增：实验结果
-    └── results.csv     ← 全部计时数据（含 baseline 与各优化）
+    ├── results.csv             ← 笔记本端 QFT28 优化对照（baseline/线程/BLAS/MPS）
+    ├── results_scale.csv       ← 规模升级全量数据（笔记本 + 服务器）
+    ├── results_scale.server.csv← 服务器端副本
+    ├── fidelity_*.json         ← fidelity 定量结果
+    └── server_*.log            ← 服务器端原始运行日志
 ```
 
-## 运行环境
+## 运行环境（两台，均 qibotn/qutensornet 纯 CPU 路径，未使用 GPU）
 
-| 项目 | 配置 |
-|------|------|
-| 系统 | Windows 11 + WSL2 Ubuntu 24.04 |
-| CPU | Intel i5-12500H（4P+8E，16 逻辑核） |
-| 可用内存 | 7.6 GB（WSL2 默认分配） |
-| Python | 3.11.15（conda 独立环境） |
-| qibotn | 0.0.3（PyPI 纯 CPU 版；官方 main 分支 pyproject 误将 cuda-toolkit 列为必需，故未用 poetry 装源码依赖，实验经 PyPI 发行版运行，脚本与版本在 results.csv command 列可复现） |
-| 后端 | qibotn/qutensornet（纯 CPU，赛题规定路径，未使用 qibojit/cuQuantum/GPU） |
+| 项目 | 机器 A（笔记本） | 机器 B（服务器） |
+|------|----------------|----------------|
+| 系统 | Windows 11 + WSL2 Ubuntu 24.04 | Debian 12（容器） |
+| CPU | Intel i5-12500H（4P+8E，16 逻辑核） | 20 核（EPYC 级） |
+| 可用内存 | 7.6 GB（WSL2 默认分配） | 100 GB |
+| Python | 3.11.15（conda） | 3.12.3（venv） |
+| qibotn | 0.0.3（PyPI 纯 CPU 版） | 0.0.3（PyPI 纯 CPU 版） |
 
-## 实验设计（对齐评审要求）
+> 注：官方 main 分支 pyproject 误将 cuda-toolkit 列为必需依赖，故经 PyPI 发行版安装运行；服务器配有 GPU 但实验全程未使用。
 
-1. **规模**：从 20 qubits 逐级加大到 28/30 qubits；Supremacy 线路 depth 从 8 加深至 30/50/100（gate 数从数百提升至数千量级），直至触及本机内存/时间上限
-2. **优化对照**：在相同 workload、相同精度、相同计算路径下仅改单一变量（线程数 / BLAS 环境变量）；MPS 作为"可扩展性方案"单独归档，并以 fidelity 量化其精度代价，不与精确收缩的加速比混算
-3. **正确性**：state vector 形状校验 + MPS 与精确态的 fidelity 对比
-4. **诚实记录**：超时/未完成/失败的运行同样写入 results（status 列），作为规模压力的证据
+## 实验结果
 
-详见 results/results.csv 与最终报告 PDF。
+### 1. 规模探索（笔记本，OMP=4）
+
+| qubits | QFT(s) | Supremacy d8(s) | 评价 |
+|--------|--------|-----------------|------|
+| 20 | 0.37 | 0.62 | 太快 |
+| 24 | 0.59 | 0.77 | 太快 |
+| **28** | **97.71** | **80.04** | 用于优化对照 |
+
+### 2. 规模升级与内存墙（Supremacy 28q，OMP=4）
+
+| depth | gates | 层数 | 笔记本 7.6GB | 服务器 100GB | MPS b128（服务器） |
+|-------|-------|------|-------------|-------------|--------------------|
+| 8 | 332 | ~16 | 58.2s | 4.5s | 9.1s |
+| 30 | 1245 | ~60 | 182.5s | — | 8.9s |
+| 50 | 2075 | ~100 | **OOM ×3** | 46.4s | 8.7s |
+| 100 | 4150 | ~200 | — | **崩溃 (1487.6s)** | **20.1s** |
+
+- depth=50 精确收缩 3 次尝试均压垮 7.6GB WSL 虚拟机（OOM）——**内存墙实测**
+- 同负载在 100GB 服务器 46.4s 完成，证实 OOM 纯由内存致因
+- depth=100 精确收缩即使 100GB 也在 24.8 分钟后崩溃；**MPS 20.1s 完成**（越墙）
+- QFT(30)（态向量 2^30 ≈ 10.7 亿维）服务器精确 dense 33.5s、MPS(b256) 26.5s——**30 qubits 达成**
+
+### 3. fidelity 定量验证（回应"正确性"质疑）
+
+| workload | 精确耗时 | MPS 耗时 | fidelity | 最大逐点误差 |
+|----------|---------|---------|----------|--------------|
+| QFT(24) | 0.86s | 0.85-0.86s | **1.00000000** | 4.8e-17 |
+| Supremacy(24,d8) | 0.75-0.80s | 0.34s | **1.0000000000** | 6.8e-16 |
+
+本规模下 MPS（bond=64/128/256）与精确态 fidelity 均为 1.0（机器精度），即 MPS 加速属于**同一数值精度下的合法对照结果**，未引入可测量精度损失。
+
+### 4. 线程对照（合规个人优化）
+
+| 环境 | workload | t4 | t12 | t20 |
+|------|----------|----|----|-----|
+| 笔记本（QFT28 dense） | 420 gates | 97.71s | 79.89s (1.22x) | — |
+| 服务器（Supremacy d8 dense） | 332 gates | 4.52s | 5.25s | 4.37s |
+
+线程收益依赖 workload 规模：笔记本大规模下 1.22x；服务器小规模上线程开销反超收益（t12 略慢于 t4）。
+
+## 复现方式
+
+```bash
+# 环境（两台机器相同步骤）
+python3 -m venv ~/venv && ~/venv/bin/pip install qibotn
+
+# 服务器端一键套件（断点续跑）
+cd /root/benchmarks && nohup bash server_suite.sh > /root/suite.log 2>&1 &
+# 第二批（大内存 dense 补全 + Supremacy fidelity）
+nohup /root/venv/bin/python -u server_batch2.py > /root/batch2.log 2>&1 &
+
+# fidelity 单项
+/root/venv/bin/python benchmark_fidelity2.py QFT 24 0 256
+```
+
+## 注意事项
+
+- **qibotn 版本**：必须用 PyPI 0.0.3。GitHub main 的 pyproject 误将 cuda-toolkit 列为必需依赖。
+- **后端**：`platform="qutensornet"`（纯 CPU）。全程未使用 qibojit/cuQuantum/GPU。
+- **诚实记录**：results_scale.csv 中 OOM / TIMEOUT / SKIPPED / FAIL 行均为真实观测，构成规模压力证据链。
