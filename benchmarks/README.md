@@ -87,6 +87,18 @@
 
 线程收益依赖 workload 规模：笔记本大规模下 1.22x；服务器小规模上线程开销反超收益（t12 略慢于 t4）。
 
+### 5. 收缩路径对比（Gray & Kourtis, Quantum 2021 方法）
+
+同 workload、同精度、仅改变收缩顺序（`TensorNetwork.contract(optimize=...)`）：
+
+| workload | greedy | auto-hq (cotengra) | auto (opt_einsum) | 结论 |
+|----------|--------|--------------------|-------------------|------|
+| QFT(28) | 22.41s | 11.67s | **8.67s** | 路径选择带来 **2.6×** 耗时差 |
+| Supremacy(24,d30) | MemoryError | MemoryError | — | 高纠缠下精确收缩路径也无解 |
+
+- 路径质量对性能影响巨大（2.6×），且**超优化不必然胜出**（QFT 规则结构下 opt_einsum 默认启发式已最优）——印证 Markov & Shi (SIAM J. Comput. 2008) 收缩复杂度理论
+- 高纠缠深线路（24q/d30/1065 gates）连最优路径也无法在 7.6GB 内完成——**这正是 MPS 方法的适用区**（28q/d100 MPS 仅 20.1s），两种方法互补
+
 ## 复现方式
 
 ```bash

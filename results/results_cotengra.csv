@@ -1,0 +1,8 @@
+tag,workload,qubits,depth,mode,bond,threads,ngates,runtime,status,detail
+cotengra_greedy,QFT,28,0,dense,0,4,420,22.4100,success,optimize=greedy
+cotengra_auto_hq,QFT,28,0,dense,0,4,420,11.6719,success,optimize=auto-hq
+cotengra_greedy,Supremacy,28,8,dense,0,4,332,1.9755,FAIL:MemoryError,optimize=greedy
+cotengra_auto_hq,Supremacy,28,8,dense,0,4,332,7.4567,FAIL:MemoryError,optimize=auto-hq
+cotengra_auto,QFT,28,0,dense,0,4,420,8.6716,success,optimize=auto
+cotengra_greedy,Supremacy,24,30,dense,0,4,1065,-0.0000,FAIL:MemoryError,optimize=greedy
+cotengra_auto_hq,Supremacy,24,30,dense,0,4,1065,-0.0000,FAIL:MemoryError,optimize=auto-hq
